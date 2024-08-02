@@ -1,52 +1,51 @@
 from rgbmatrix import graphics
 import time
-from PIL import ImageColor
+
+from ..utils import *
 
 def scrollingText(matrix, message):
         
         offscreen_canvas = matrix.CreateFrameCanvas()
         font = graphics.Font()
         
-        height = message["value"].get("yPos") or 18
+        height = message["effects"].get("yPos", 20)
 
-        # Make path dynamic
+        # TODO: Make path dynamic
         font.LoadFont("pi5/fonts/7x13.bdf")
-        textColor = graphics.Color(255, 255, 255)
+        
+        messageText = message["value"]
+
+        substrings, colors = colorSplit(message["effects"].get("colors", [{"index": [0, len(messageText) - 1], "color":"#FFFFFF"}]), messageText)
+            
+        
         pos = offscreen_canvas.width
-        messageText = message["value"]["text"]
+        offscreen_canvas.Clear()
+        textLength = 0
+
+        @interrupt
+        def runText(matrix, message):
+            nonlocal pos
+            nonlocal offscreen_canvas
+            nonlocal textLength
+            nonlocal substrings
+            nonlocal colors
+
+            
+            if pos + textLength <= 0:
+                pos = offscreen_canvas.width
+
+            offscreen_canvas.Clear()
+            textLength = 0
+
+            for idx, sub in enumerate(substrings):
+                textColor = graphics.Color(*(colors[idx]))
+                textLength += graphics.DrawText(offscreen_canvas, font, pos + textLength, height, textColor, sub)
+
+            offscreen_canvas = matrix.SwapOnVSync(offscreen_canvas)
+            pos -= 1
+            time.sleep(0.02)
+
+        runText(matrix, message)
 
         offscreen_canvas.Clear()
-        pixelLength = graphics.DrawText(offscreen_canvas, font, pos , height, textColor, messageText)
-
-        if message["value"].get("colors") is None:
-
-            while (pos + pixelLength > 0):
-                offscreen_canvas.Clear()
-
-                graphics.DrawText(offscreen_canvas, font, pos, height, textColor, messageText)
-                time.sleep(0.005)
-
-                offscreen_canvas = matrix.SwapOnVSync(offscreen_canvas)
-                pos -= 1
-
-        else:
-            substrings = []
-            for sub in message["value"]["colors"]:
-                spl1 = None if sub["index"][0] == 0 else sub["index"][0]
-                spl2 = None if sub["index"][1] - len(messageText) + 1 == 0 else sub["index"][1] - len(messageText) + 1
-                
-                substrings.append(messageText[spl1: spl2])
-
-            while (pos + pixelLength > 0):
-                offscreen_canvas.Clear()
-                textLength = 0
-
-                for idx, sub in enumerate(substrings):
-                    rgb = ImageColor.getcolor(message["value"]["colors"][idx]["color"], "RGB")
-                    textColor = graphics.Color(rgb[0], rgb[1], rgb[2])
-
-                    textLength += graphics.DrawText(offscreen_canvas, font, pos + textLength, height, textColor, sub)
-
-                time.sleep(0.005)
-                offscreen_canvas = matrix.SwapOnVSync(offscreen_canvas)
-                pos -= 1
+        offscreen_canvas = matrix.SwapOnVSync(offscreen_canvas)

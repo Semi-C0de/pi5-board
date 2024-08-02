@@ -1,8 +1,9 @@
 from typing import Optional
 
-from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 from .message_presenters.text.scrolling import *
+from .message_presenters.text.static import *
 
 class LEDDisplay:
     def __init__(self,
@@ -87,31 +88,14 @@ class LEDDisplay:
                 pass
         
         else:
-            # Functionality to determine type of message
-            scrollingText(self.matrix, self.messages[0])
-            
+            for index in range(0, number):
+                if self.messages[index]["type"] == "text":
+                    self._dislayText(self.messages[index])
 
-if __name__ == "__main__":
+    def _dislayText(self, message):
+        scroll = True if message.get("effects").get("scroll") == "true" else False
 
-    display = LEDDisplay(led_chain=2)
-
-    dict = { "type":"text",
-             "value":{
-                "text":"Hello World!",
-                "colors":[
-                    {
-                        "index":[0, 4],
-                        "color":"#FF0000"
-                    },
-                    {
-                        "index":[5, 11],
-                        "color":"#00FF00"
-                    }
-                ]
-        },
-            "type":"scroll"
-
-    }
-
-    display.addMessage(dict)
-    display.displayMessages(number=0)
+        if scroll:  
+            scrollingText(self.matrix, message)
+        else:
+            staticText(self.matrix, message)
