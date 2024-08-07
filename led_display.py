@@ -4,6 +4,8 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 from .message_presenters.text.scrolling import *
 from .message_presenters.text.static import *
+from .message_presenters.image.static import *
+from .message_presenters.image.scrolling import *
 
 class LEDDisplay:
     def __init__(self,
@@ -85,12 +87,15 @@ class LEDDisplay:
         
         if number is None:
             for message in self.messages:
+                # TODO: Implement
                 pass
         
         else:
             for index in range(0, number):
                 if self.messages[index]["type"] == "text":
                     self._dislayText(self.messages[index])
+                if self.messages[index]["type"] == "image":
+                    self._displayImage(self.messages[index])
 
     def _dislayText(self, message):
         scroll = True if message.get("effects").get("scroll") == "true" else False
@@ -99,3 +104,11 @@ class LEDDisplay:
             scrollingText(self.matrix, message)
         else:
             staticText(self.matrix, message)
+
+    def _displayImage(self, message):
+        scroll = True if message.get("effects").get("scroll") == "true" else False
+
+        if scroll:
+            scrollingImage(self.matrix, message)
+        else:
+            staticImage(self.matrix, message)
